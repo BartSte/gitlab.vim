@@ -80,4 +80,42 @@ function utils.joinpath(...)
   return (table.concat({ ... }, '/'):gsub('//+', '/'))
 end
 
+
+--- Return a list of words from a given string.
+--- The words are split like vim's "w" operator. Whitespace and newlines are
+--- retained and are interpereted as words.
+---@param text string
+---@return string[] words
+function utils.split_words(text)
+    local words = {}
+    for chunk, space in text:gmatch("([^%s]+)(%s*)") do
+        local subchunks = {}
+        local current_word = ""
+        for i = 1, #chunk do
+            local c = chunk:sub(i, i)
+            if c:match("[%w_]") then
+                current_word = current_word .. c
+            else
+                if #current_word > 0 then
+                    table.insert(subchunks, current_word)
+                    current_word = ""
+                end
+                table.insert(subchunks, c)
+            end
+        end
+        if #current_word > 0 then
+            table.insert(subchunks, current_word)
+        end
+        if #subchunks > 0 then
+            subchunks[#subchunks] = subchunks[#subchunks] .. space
+        else
+            table.insert(subchunks, space)
+        end
+        for _, sc in ipairs(subchunks) do
+            table.insert(words, sc)
+        end
+    end
+    return words
+end
+
 return utils

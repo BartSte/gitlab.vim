@@ -1,3 +1,5 @@
+local utils = require('gitlab.utils')
+
 local M = {
   -- Used for dependency injection
   vim = vim,
@@ -110,6 +112,39 @@ local function create_or_update_extmark(lines)
     M.vim.api.nvim_buf_del_extmark(bufnr, ns, ghost_text_extmark_id)
   end
   ghost_text_extmark_id = M.vim.api.nvim_buf_set_extmark(bufnr, ns, row - 1, col, opts)
+end
+
+--- Return the text to insert.
+---@return string
+local function get_text_to_insert()
+  if not suggestion_shown then
+    return ""
+  end
+  local text_to_insert = stream_buffer ~= '' and stream_buffer or last_suggestion
+  if not text_to_insert then
+    return ""
+  end
+  return text_to_insert
+end
+
+--- Insert the `text` at the current cursor position.
+--- The cursor is moved to the end of the text.
+---@param text string
+---@return nil
+local function insert_text(text)
+  if not text then
+    return
+  end
+  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+  local lines = M.vim.split(text, '\n')
+  M.vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col, lines)
+  local new_row = row + #lines - 1
+  local new_col = #lines > 1 and #lines[#lines] or (col + #lines[1])
+  M.vim.api.nvim_win_set_cursor(0, { new_row, new_col })
+  M.clear_ghost_text()
+  if M.is_streaming then
+    M.cancel_streaming()
+  end
 end
 
 M.clear_all_ghost_text = function()
@@ -271,25 +306,23 @@ M.insert_or_request_ghost_text = function()
   end
 end
 
+---Insert the ghost text at the cursor position.
 M.insert_ghost_text = function()
-  if not suggestion_shown then
-    return
-  end
-  local text_to_insert = stream_buffer ~= '' and stream_buffer or last_suggestion
-  if not text_to_insert then
-    return
-  end
-  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-  local lines = M.vim.split(text_to_insert, '\n')
-  M.vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col, lines)
-  local new_row = row + #lines - 1
-  local new_col = #lines > 1 and #lines[#lines] or (col + #lines[1])
-  M.vim.api.nvim_win_set_cursor(0, { new_row, new_col })
-  M.clear_ghost_text()
+  insert_text(get_text_to_insert())
+end
 
-  if M.is_streaming then
-    M.cancel_streaming()
-  end
+--- Insert the first line of the ghost text at the cursor position.
+M.insert_line = function()
+    local text = get_text_to_insert()
+    local line = vim.split(text, '\n')[1] or ""
+    insert_text(line)
+end
+
+--- Insert the first word of the ghost text at the cursor position.
+M.insert_word = function()
+    local text = get_text_to_insert()
+    local word = utils.split_words(text)[1] or ""
+    insert_text(word)
 end
 
 M.toggle_enabled = function()

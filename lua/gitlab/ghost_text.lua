@@ -1,6 +1,5 @@
 local utils = require("gitlab.utils")
 
-
 local M = {
   -- Used for dependency injection
   vim = vim,
@@ -22,11 +21,6 @@ local stream_buffer = ''
 M.suppress_next_text_changed = false
 M.suppress_next_cursor_moved = false
 M.isPartialInsertion = false
-
--- We keep separate histories:
--- For word insertions, we use a stack (an array)
-
--- For line insertions, only one event is stored.
 M.partial_insertion_history = { word = {}, line = nil }
 
 local function setup_highlights()
@@ -336,10 +330,6 @@ M.insert_ghost_text = function()
 end
 
 
--- ===========================================================================
--- PARTIAL INSERT + RESTORE
--- ===========================================================================
-
 -- This helper does the actual partial insertion and updates the appropriate history.
 local function partial_insert_text(partial, remainder, insertion_type)
   if partial == "" then
@@ -480,9 +470,6 @@ M.on_text_changed = function()
   M.update_ghost_text_with_debounce(M.edit_counter)
 end
 
--- ===========================================================================
--- RESTORE FUNCTIONS
--- ===========================================================================
 -- Restore the last (or only) partial line insertion.
 M.restore_line = function()
   local event = M.partial_insertion_history["line"]

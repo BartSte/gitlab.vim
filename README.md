@@ -1,5 +1,13 @@
 # GitLab Plugin for Neovim
 
+This is a fork from: [Gitlab Duo](https://gitlab.com/gitlab-org/editor-extensions/gitlab.vim).
+This fork contains the following extra features for the inline suggestions:
+
+- insert the next word
+- restore the last word
+- insert the next line
+- restore the last line
+
 This extension integrates GitLab Duo with Neovim. It's built with Lua.
 This extension provides:
 

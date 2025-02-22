@@ -2,14 +2,27 @@ local utils = require("gitlab.utils")
 local writer = require("gitlab.ghost_text.writer")
 local suggestion = require("gitlab.ghost_text.suggestion")
 
+---@class GhostTextCommands
+---@field namespace number|nil
+---@field setup fun(namespace: number): nil
+---@field clear_all_ghost_text fun(): nil
+---@field insert_ghost_text fun(): nil
+---@field insert_line fun(): nil
+---@field insert_word fun(): nil
+---@field toggle_enabled fun(): nil
+---@field restore_line fun(): nil
+---@field restore_word fun(): nil
 local M = {
-  namespace = nil
-}
+  namespace = nil,
+} ---@type GhostTextCommands
 
+--- Setup the module with a given namespace.
+--- @param namespace number
 M.setup = function(namespace)
   M.namespace = namespace
 end
 
+--- Clears all ghost text in the current buffer.
 M.clear_all_ghost_text = function()
   writer.clear_ghost_text()
   if M.namespace then
@@ -18,13 +31,13 @@ M.clear_all_ghost_text = function()
   end
 end
 
---- Insert the entire ghost text at the cursor position.
+--- Inserts the entire ghost text at the cursor position.
 M.insert_ghost_text = function()
   writer.is_partial_insertion = false
   writer.insert_text(suggestion.text.as_text())
 end
 
---- Insert the first line from the current suggestion, preserving exact remainder.
+--- Inserts the first line from the current suggestion, preserving exact remainder.
 M.insert_line = function()
   if writer.is_streaming then
     return
@@ -44,8 +57,7 @@ M.insert_line = function()
   writer.partial_insert_text(partial, remainder, "line")
 end
 
---- Insert the first "word" (using utils.split_words) from the suggestion,
---- then re-display the exact remainder.
+--- Inserts the first "word" from the suggestion, then re-displays the exact remainder.
 M.insert_word = function()
   if writer.is_streaming then
     return
@@ -63,6 +75,7 @@ M.insert_word = function()
   writer.partial_insert_text(partial, remainder, "word")
 end
 
+--- Toggles ghost text enabled state.
 M.toggle_enabled = function()
   if writer.enabled then
     writer.enabled = false
@@ -74,7 +87,7 @@ M.toggle_enabled = function()
   end
 end
 
--- Restore the last (or only) partial line insertion.
+--- Restores the last (or only) partial line insertion.
 M.restore_line = function()
   local event = writer.history["line"]
   if not event then
@@ -101,7 +114,7 @@ M.restore_line = function()
   writer.history["line"] = nil
 end
 
--- Restore only the last partial word insertion.
+--- Restores only the last partial word insertion.
 M.restore_word = function()
   local stack = writer.history["word"]
   if not stack or #stack == 0 then

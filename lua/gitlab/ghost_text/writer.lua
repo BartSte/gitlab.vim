@@ -1,26 +1,55 @@
 local lsp                    = require("gitlab.ghost_text.lsp")
 local suggestion             = require("gitlab.ghost_text.suggestion")
 
-local M                      = {}
+---@class GhostTextWriter
+---@field edit_counter number
+---@field enabled boolean
+---@field history table<string,
+---@field is_partial_insertion boolean
+---@field namespace number|nil
+---@field suppress_next_cursor_moved boolean
+---@field suppress_next_text_changed boolean
+---@field is_streaming boolean
+---@field is_requesting boolean
+---@field setup fun(namespace: number): nil
+---@field debounce fun(func: fun(...): nil): fun(...): nil
+---@field create_or_update_extmark fun(lines: string[]): nil
+---@field insert_text fun(text: string): nil
+---@field partial_insert_text fun(partial: string, remainder: string, insertion_type: string): nil
+---@field suppress_next_events fun(): nil
+---@field increment_edit_counter fun(): nil
+---@field clear_ghost_text fun(): nil
+---@field debounce_update_ghost_text fun(counter: number): nil
+---@field update_ghost_text_with_debounce fun(counter: number): nil
+---@field update_ghost_text fun(counter: number): nil
+---@field make_callback fun(counter: number): fun(err: any, result: any): nil
+---@field display_suggestion fun(suggestions: any[]): nil
+---@field insert_or_request_ghost_text fun(): nil
+local M                           = {}
 
-M.edit_counter               = 0
-M.enabled                    = true
-M.history                    = { word = {}, line = nil }
-M.is_partial_insertion       = false
-M.namespace                  = nil
-M.suppress_next_cursor_moved = false
-M.suppress_next_text_changed = false
+M.edit_counter                    = 0
+M.enabled                         = true
+M.history                         = { word = {}, line = nil }
+M.is_partial_insertion            = false
+M.namespace                       = nil
+M.suppress_next_cursor_moved      = false
+M.suppress_next_text_changed      = false
+M.is_streaming                    = false
+M.is_requesting                   = false
 
-
-M.setup = function(namespace)
+--- Sets up the ghost text module with the given namespace.
+--- @param namespace number
+M.setup                           = function(namespace)
   M.namespace = namespace
 end
-
 
 local debounce_delay              = 80 -- milliseconds
 local ghost_text_extmark_id       = nil
 local update_timer                = nil
 
+--- Creates a debounced version of the provided function.
+--- @param func fun(...): nil
+--- @return fun(...): nil
 M.debounce                        = function(func)
   return function(...)
     local args = { ... }
@@ -34,10 +63,12 @@ M.debounce                        = function(func)
   end
 end
 
+--- Creates or updates an extmark for ghost text.
+--- @param lines string[]
 M.create_or_update_extmark        = function(lines)
   local bufnr = vim.api.nvim_get_current_buf()
   local row, col = unpack(vim.api.nvim_win_get_cursor(0))
-  local virt_text = { { lines[1], } }
+  local virt_text = { { lines[1] } }
   local virt_lines = {}
   for i = 2, #lines do
     table.insert(virt_lines, { { lines[i], "GitLabGhostText" } })
@@ -56,7 +87,9 @@ M.create_or_update_extmark        = function(lines)
   ghost_text_extmark_id = vim.api.nvim_buf_set_extmark(bufnr, M.namespace, row - 1, col, opts)
 end
 
--- Single insert function with internal logic to skip clearing ghost text if performing a partial insertion.
+--- Inserts text at the current cursor position.
+--- If not performing a partial insertion, it will clear ghost text and cancel streaming.
+--- @param text string
 M.insert_text                     = function(text)
   if not text or text == "" then
     return
@@ -75,7 +108,10 @@ M.insert_text                     = function(text)
   end
 end
 
--- This helper does the actual partial insertion and updates the appropriate history.
+--- Performs a partial insertion and updates insertion history.
+--- @param partial string The text to be inserted.
+--- @param remainder string The leftover ghost text.
+--- @param insertion_type string Either "word" or "line".
 M.partial_insert_text             = function(partial, remainder, insertion_type)
   if partial == "" then
     return
@@ -125,16 +161,18 @@ M.partial_insert_text             = function(partial, remainder, insertion_type)
   end
 end
 
--- Suppress the next on_text_changed and on_cursor_moved events.
+--- Suppresses the next on_text_changed and on_cursor_moved events.
 M.suppress_next_events            = function()
   M.suppress_next_text_changed = true
   M.suppress_next_cursor_moved = true
 end
 
+--- Increments the edit counter.
 M.increment_edit_counter          = function()
   M.edit_counter = M.edit_counter + 1
 end
 
+--- Clears ghost text from the buffer and resets suggestion display.
 M.clear_ghost_text                = function()
   if M.namespace and ghost_text_extmark_id then
     local bufnr = vim.api.nvim_get_current_buf()
@@ -147,12 +185,16 @@ M.clear_ghost_text                = function()
   suggestion.text.show = false
 end
 
+--- A helper that calls update_ghost_text with the given counter.
+--- @param counter number
 M.debounce_update_ghost_text      = function(counter)
   M.update_ghost_text(counter)
 end
 
 M.update_ghost_text_with_debounce = M.debounce(M.debounce_update_ghost_text)
 
+--- Updates the ghost text if the edit counter matches and the client and namespace are available.
+--- @param counter number
 M.update_ghost_text               = function(counter)
   if not M.enabled then
     return
@@ -169,6 +211,9 @@ M.update_ghost_text               = function(counter)
   lsp.request_completion(M.make_callback(counter))
 end
 
+--- Creates a callback for the LSP request that processes completion results.
+--- @param counter number
+--- @return fun(err: any, result: any): nil
 M.make_callback                   = function(counter)
   return function(err, result)
     if M.edit_counter ~= counter then
@@ -192,6 +237,8 @@ M.make_callback                   = function(counter)
   end
 end
 
+--- Displays a suggestion by updating ghost text.
+--- @param suggestions any[]
 M.display_suggestion              = function(suggestions)
   suggestion.text.show = true
   if #suggestions == 0 then
@@ -202,6 +249,7 @@ M.display_suggestion              = function(suggestions)
   M.create_or_update_extmark(lines)
 end
 
+--- Inserts ghost text if it is already showing, otherwise requests an update.
 M.insert_or_request_ghost_text    = function()
   if suggestion.text.show then
     M.insert_ghost_text()

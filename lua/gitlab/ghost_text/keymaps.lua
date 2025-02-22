@@ -1,4 +1,7 @@
 local commands = require('gitlab.ghost_text.commands')
+
+---@class GitlabGhostTextKeymaps
+---@field setup fun(cfg: table)
 local M = {}
 
 M.setup = function(cfg)

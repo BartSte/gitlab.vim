@@ -1,6 +1,7 @@
 local utils            = require("gitlab.utils")
-local writer           = require("gitlab.ghost_text.writer")
+local display           = require("gitlab.ghost_text.display")
 local suggestion       = require("gitlab.ghost_text.suggestion")
+local insert           = require("gitlab.ghost_text.insert")
 
 ---@class GhostTextCommands
 ---@field namespace number|nil
@@ -24,7 +25,7 @@ end
 
 --- Clears all ghost text in the current buffer.
 M.clear_all_ghost_text = function()
-  writer.clear_ghost_text()
+  display.clear_ghost_text()
   if M.namespace then
     local bufnr = vim.api.nvim_get_current_buf()
     vim.api.nvim_buf_clear_namespace(bufnr, M.namespace, 0, -1)
@@ -33,8 +34,8 @@ end
 
 --- Inserts the entire ghost text at the cursor position.
 M.insert_ghost_text    = function()
-  writer.is_partial_insertion = false
-  writer.insert_text(suggestion.text.as_text())
+  insert.is_partial_insertion = false
+  insert.insert_text(suggestion.text.as_text())
 end
 
 --- Inserts the first line from the current suggestion, preserving exact remainder.
@@ -49,12 +50,12 @@ M.insert_line          = function()
   local first_newline = text:find("\n")
   if not first_newline then
     -- No newline: treat as a line insertion.
-    writer.partial_insert_text(text, "", "line")
+    insert.partial_insert_text(text, "", "line")
     return
   end
   local partial = text:sub(1, first_newline - 1)
   local remainder = text:sub(first_newline + 1)
-  writer.partial_insert_text(partial, remainder, "line")
+  insert.partial_insert_text(partial, remainder, "line")
 end
 
 --- Inserts the first "word" from the suggestion, then re-displays the exact remainder.
@@ -72,29 +73,29 @@ M.insert_word          = function()
   end
   local partial = words[1]
   local remainder = text:sub(#partial + 1)
-  writer.partial_insert_text(partial, remainder, "word")
+  insert.partial_insert_text(partial, remainder, "word")
 end
 
 --- Toggles ghost text enabled state.
 M.toggle_enabled       = function()
-  if writer.enabled then
-    writer.enabled = false
-    writer.increment_edit_counter()
-    writer.clear_ghost_text()
+  if display.enabled then
+    display.enabled = false
+    display.increment_edit_counter()
+    display.clear_ghost_text()
   else
-    writer.enabled = true
-    writer.update_ghost_text(writer.edit_counter)
+    display.enabled = true
+    display.update_ghost_text(display.edit_counter)
   end
 end
 
 --- Restores the last (or only) partial line insertion.
 M.restore_line         = function()
-  local event = writer.history["line"]
+  local event = insert.history["line"]
   if not event then
     return
   end
   local bufnr = vim.api.nvim_get_current_buf()
-  writer.suppress_next_events()
+  insert.suppress_next_events()
   local start_row = event.row_before - 1
   local start_col = event.col_before
   local lines = event.lines_inserted or {}
@@ -110,19 +111,19 @@ M.restore_line         = function()
   suggestion.text.value = restored
   suggestion.text.show = true
   local splitted = vim.split(restored, "\n")
-  writer.create_or_update_extmark(splitted)
-  writer.history["line"] = nil
+  display.create_or_update_extmark(splitted)
+  insert.history["line"] = nil
 end
 
 --- Restores only the last partial word insertion.
 M.restore_word         = function()
-  local stack = writer.history["word"]
+  local stack = insert.history["word"]
   if not stack or #stack == 0 then
     return
   end
   local event = table.remove(stack)
   local bufnr = vim.api.nvim_get_current_buf()
-  writer.suppress_next_events()
+  insert.suppress_next_events()
   local start_row = event.row_before - 1
   local start_col = event.col_before
   local lines = event.lines_inserted or {}
@@ -138,7 +139,7 @@ M.restore_word         = function()
   suggestion.text.value = restored
   suggestion.text.show = true
   local splitted = vim.split(restored, "\n")
-  writer.create_or_update_extmark(splitted)
+  display.create_or_update_extmark(splitted)
 end
 
 return M

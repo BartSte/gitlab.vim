@@ -1,5 +1,5 @@
-local lsp                    = require("gitlab.ghost_text.lsp")
-local suggestion             = require("gitlab.ghost_text.suggestion")
+local lsp                         = require("gitlab.ghost_text.lsp")
+local suggestion                  = require("gitlab.ghost_text.suggestion")
 
 ---@class GhostTextWriter
 ---@field edit_counter number
@@ -9,7 +9,6 @@ local suggestion             = require("gitlab.ghost_text.suggestion")
 ---@field namespace number|nil
 ---@field suppress_next_cursor_moved boolean
 ---@field suppress_next_text_changed boolean
----@field is_streaming boolean
 ---@field is_requesting boolean
 ---@field setup fun(namespace: number): nil
 ---@field debounce fun(func: fun(...): nil): fun(...): nil
@@ -24,7 +23,6 @@ local suggestion             = require("gitlab.ghost_text.suggestion")
 ---@field update_ghost_text fun(counter: number): nil
 ---@field make_callback fun(counter: number): fun(err: any, result: any): nil
 ---@field display_suggestion fun(suggestions: any[]): nil
----@field insert_or_request_ghost_text fun(): nil
 local M                           = {}
 
 M.edit_counter                    = 0
@@ -34,7 +32,6 @@ M.is_partial_insertion            = false
 M.namespace                       = nil
 M.suppress_next_cursor_moved      = false
 M.suppress_next_text_changed      = false
-M.is_streaming                    = false
 M.is_requesting                   = false
 
 --- Sets up the ghost text module with the given namespace.
@@ -103,7 +100,7 @@ M.insert_text                     = function(text)
   if not M.is_partial_insertion then
     M.clear_ghost_text()
     if suggestion.stream.active then
-      suggestion.stream.cancel_streaming()
+      suggestion.stream.cancel()
     end
   end
 end
@@ -205,8 +202,8 @@ M.update_ghost_text               = function(counter)
   if lsp.client == nil or not M.namespace then
     return
   end
-  if M.is_streaming then
-    suggestion.stream.cancel_streaming()
+  if suggestion.stream.active then
+    suggestion.stream.cancel()
   end
   lsp.request_completion(M.make_callback(counter))
 end
@@ -230,7 +227,7 @@ M.make_callback                   = function(counter)
     end
     if result.items[1].command and result.items[1].command.command == 'gitlab.ls.startStreaming' then
       local new_stream_id = result.items[1].command.arguments[1]
-      suggestion.stream.start_new_stream(new_stream_id)
+      suggestion.stream.start(new_stream_id)
     else
       M.display_suggestion(result.items)
     end
@@ -249,12 +246,33 @@ M.display_suggestion              = function(suggestions)
   M.create_or_update_extmark(lines)
 end
 
---- Inserts ghost text if it is already showing, otherwise requests an update.
-M.insert_or_request_ghost_text    = function()
-  if suggestion.text.show then
-    M.insert_ghost_text()
-  else
-    M.update_ghost_text(M.edit_counter)
+--- Displays the streaming suggestion by updating extmarks.
+--- @param value string
+M.display_streaming_suggestion    = function(value)
+  local lines = vim.split(value, '\n')
+  M.create_or_update_extmark(lines)
+end
+
+--- Handles the streaming response from the LSP.
+--- @param err any
+--- @param result { id?: number, completion?: string, done?: boolean }
+M.handle_streaming_response       = function(err, result)
+  if err then
+    suggestion.stream.finish()
+    return
+  end
+  if not result.id or result.id ~= suggestion.stream.id then
+    return
+  end
+  if not suggestion.stream.active then
+    return
+  end
+  if result.completion then
+    suggestion.stream.buffer = result.completion
+    M.display_streaming_suggestion(suggestion.stream.buffer)
+  end
+  if result.done then
+    suggestion.stream.finish()
   end
 end
 

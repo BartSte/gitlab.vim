@@ -4,7 +4,7 @@ local highlights  = require("gitlab.ghost_text.highlights")
 local keymaps     = require("gitlab.ghost_text.keymaps")
 local lsp         = require("gitlab.ghost_text.lsp")
 local suggestions = require("gitlab.ghost_text.suggestion")
-local writer     = require("gitlab.ghost_text.writer")
+local writer      = require("gitlab.ghost_text.writer")
 
 ---@class GitLabGhostText
 ---@field GROUP string
@@ -18,7 +18,7 @@ local writer     = require("gitlab.ghost_text.writer")
 ---@field restore_word fun(): nil
 ---@field toggle_enabled fun(): nil
 ---@field handle_streaming_response fun(err: any, result: any): nil
-local M = {
+local M           = {
   GROUP = "GitLabGhostText",
   clear_all_ghost_text = commands.clear_all_ghost_text,
   enabled = writer.enabled,
@@ -29,13 +29,13 @@ local M = {
   restore_line = commands.restore_line,
   restore_word = commands.restore_word,
   toggle_enabled = commands.toggle_enabled,
-  handle_streaming_response = suggestions.handle_streaming_response
-} ---@type GitLabGhostText
+  handle_streaming_response = writer.handle_streaming_response
+}
 
 --- Sets up the ghost text module.
 --- @param lsp_client vim.lsp.Client
 --- @param cfg { enabled: boolean }
-M.setup = function(lsp_client, cfg)
+M.setup           = function(lsp_client, cfg)
   if not cfg or not cfg.enabled then
     return
   end
@@ -49,4 +49,3 @@ M.setup = function(lsp_client, cfg)
 end
 
 return M
-

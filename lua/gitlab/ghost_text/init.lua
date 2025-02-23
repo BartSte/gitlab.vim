@@ -3,7 +3,6 @@ local commands    = require("gitlab.ghost_text.commands")
 local highlights  = require("gitlab.ghost_text.highlights")
 local keymaps     = require("gitlab.ghost_text.keymaps")
 local lsp         = require("gitlab.ghost_text.lsp")
-local suggestions = require("gitlab.ghost_text.suggestion")
 local writer      = require("gitlab.ghost_text.writer")
 
 ---@class GitLabGhostText

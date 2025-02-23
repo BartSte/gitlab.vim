@@ -23,6 +23,7 @@ local suggestion                  = require("gitlab.ghost_text.suggestion")
 ---@field update_ghost_text fun(counter: number): nil
 ---@field make_callback fun(counter: number): fun(err: any, result: any): nil
 ---@field display_suggestion fun(suggestions: any[]): nil
+---@field handle_streaming_response fun(err: table, result: table): nil
 local M                           = {}
 
 M.edit_counter                    = 0
@@ -257,6 +258,7 @@ end
 --- @param err any
 --- @param result { id?: number, completion?: string, done?: boolean }
 M.handle_streaming_response       = function(err, result)
+  dd(result)
   if err then
     suggestion.stream.finish()
     return

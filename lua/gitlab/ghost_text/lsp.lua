@@ -1,11 +1,11 @@
 ---@class GhostTextLsp
 ---@field setup fun(client: vim.lsp.Client): nil
 ---@field request_completion fun(callback: fun(err: any, result: any, ctx: any): any): nil
----@field notify fun(message: string|table, id: number): nil
-local M = {} ---@type InlineCompletion
+---@field notify fun(message: string, id: number): nil
+local M = {}
 
 --- Setup the client for the module.
---- @param client vim.lsp.Client
+--- @param client table
 function M.setup(client)
   M.client = client
 end
@@ -28,7 +28,7 @@ function M.request_completion(callback)
 end
 
 --- Notify the client.
---- @param message string|table
+--- @param message string
 --- @param id number
 function M.notify(message, id)
   --- @type number
@@ -42,4 +42,3 @@ function M.notify(message, id)
 end
 
 return M
-

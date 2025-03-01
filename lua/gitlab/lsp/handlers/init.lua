@@ -29,7 +29,7 @@ return {
     end
 
     if checks_passed then
-      statusline.update_status_line(globals.GCS_AVAILABLE)
+      statusline.update_status_line(globals.GCS_AVAILABLE_AND_ENABLED)
     else
       statusline.update_status_line(globals.GCS_UNAVAILABLE)
     end

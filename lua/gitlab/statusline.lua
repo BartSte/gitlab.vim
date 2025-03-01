@@ -49,11 +49,13 @@ end
 
 function statusline.update_status_line(state)
   local config = require('gitlab.config').current()
-  if config.statusline.enabled then
+  if type(config.statusline.enabled) == "function" then
+    config.statusline.enabled(state)
+    return true
+  elseif config.statusline.enabled then
     vim.o.statusline = statusline.status_line_for(statusline.state_label_for(state))
     return true
   end
-
   return false
 end
 

@@ -8,6 +8,16 @@ This fork contains the following extra features for the inline suggestions:
 - insert the next line
 - restore the last line
 
+Other difference are:
+
+- the setting `statusline.enabled` also accepts a function with the signature:
+
+  ```lua
+  ---For a customized update based on the status of the plugin.
+  ---@param status number Corresponds to `gitlab.globals`.
+  function(status) end
+  ```
+
 This extension integrates GitLab Duo with Neovim. It's built with Lua.
 This extension provides:
 

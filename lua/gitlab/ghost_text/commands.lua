@@ -1,5 +1,5 @@
 local utils            = require("gitlab.utils")
-local display           = require("gitlab.ghost_text.display")
+local display          = require("gitlab.ghost_text.display")
 local suggestion       = require("gitlab.ghost_text.suggestion")
 local insert           = require("gitlab.ghost_text.insert")
 
@@ -53,8 +53,8 @@ M.insert_line          = function()
     insert.partial_insert_text(text, "", "line")
     return
   end
-  local partial = text:sub(1, first_newline - 1)
-  local remainder = text:sub(first_newline + 1)
+  local partial = text:sub(1, first_newline)
+  local remainder = text:sub(first_newline + 1) -- Also remove the newline
   insert.partial_insert_text(partial, remainder, "line")
 end
 

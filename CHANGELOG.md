@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.0
+
+- Added support for partial suggestion insertion and restoration (next/previous word/line)
+- Refactored ghost text implementation into modular components (autocmd, commands, display, insert, lsp, suggestion)
+- Updated statusline configuration to accept custom callback functions for dynamic updates
+- Implemented word splitting utility to support partial suggestion interactions
+- Fixed ghost text display issues with trailing newlines and cursor positioning
+- Updated README with fork information and new feature documentation
+
 ## v1.0.0
 
 - Upgrade GitLab language server for Code Suggestions to `v2.1.0` (!44)

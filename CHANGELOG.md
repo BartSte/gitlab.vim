@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.0
+
+- Added status tracking for code suggestions LSP (waiting, success, failed states)
+
 ## v1.2.0
 
 - Upgrade GitLab language server for Code Suggestions to `v7.17.1` (!216)

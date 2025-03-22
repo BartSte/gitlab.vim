@@ -20,8 +20,10 @@ local globals = {
     GCS_WAITING_TEXT = 'waiting',
     GCS_SUCCESS = 8, -- got a valid response
     GCS_SUCCESS_TEXT = 'success',
-    GCS_FAILED = 9, -- got an invalid or empty response
+    GCS_ERROR = 9,   -- got an invalid or empty response
     GCS_FAILED_TEXT = 'failed',
+    GCS_NONE = 10,   -- got an invalid or empty response
+    GCS_NONE_TEXT = 'none',
 }
 
 return globals

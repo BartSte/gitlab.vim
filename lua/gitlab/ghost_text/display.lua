@@ -1,4 +1,5 @@
 local lsp                         = require("gitlab.ghost_text.lsp")
+local globals = require("gitlab.globals")
 local suggestion                  = require("gitlab.ghost_text.suggestion")
 
 ---@class GhostTextDisplay
@@ -113,6 +114,7 @@ M.update_ghost_text               = function(counter)
   if suggestion.stream.active then
     suggestion.stream.cancel()
   end
+  require("gitlab.statusline").update_status_line(globals.GCS_WAITING)
   lsp.request_completion(M.make_callback(counter))
 end
 
@@ -125,13 +127,16 @@ M.make_callback                   = function(counter)
       return
     end
     if err then
+      require("gitlab.statusline").update_status_line(globals.GCS_FAILED)
       M.clear_ghost_text()
       return
     end
     if not result or #result.items == 0 then
+      require("gitlab.statusline").update_status_line(globals.GCS_FAILED)
       M.clear_ghost_text()
       return
     end
+    require("gitlab.statusline").update_status_line(globals.GCS_SUCCESS)
     if result.items[1].command and result.items[1].command.command == 'gitlab.ls.startStreaming' then
       local new_stream_id = result.items[1].command.arguments[1]
       suggestion.stream.start(new_stream_id)

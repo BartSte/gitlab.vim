@@ -18,33 +18,33 @@ local display    = require("gitlab.ghost_text.display")
 ---@field toggle_enabled fun(): nil
 ---@field handle_streaming_response fun(err: any, result: any): nil
 local M          = {
-  GROUP = "GitLabGhostText",
-  clear_all_ghost_text = commands.clear_all_ghost_text,
-  enabled = display.enabled,
-  insert_ghost_text = commands.insert_ghost_text,
-  insert_line = commands.insert_line,
-  insert_word = commands.insert_word,
-  namespace = nil,
-  restore_line = commands.restore_line,
-  restore_word = commands.restore_word,
-  toggle_enabled = commands.toggle_enabled,
-  handle_streaming_response = display.handle_streaming_response
+    GROUP = "GitLabGhostText",
+    clear_all_ghost_text = commands.clear_all_ghost_text,
+    enabled = display.enabled,
+    insert_ghost_text = commands.insert_ghost_text,
+    insert_line = commands.insert_line,
+    insert_word = commands.insert_word,
+    namespace = nil,
+    restore_line = commands.restore_line,
+    restore_word = commands.restore_word,
+    toggle_enabled = commands.toggle_enabled,
+    handle_streaming_response = display.handle_streaming_response
 }
 
 --- Sets up the ghost text module.
 --- @param lsp_client vim.lsp.Client
 --- @param cfg { enabled: boolean }
 M.setup          = function(lsp_client, cfg)
-  if not cfg or not cfg.enabled then
-    return
-  end
-  M.namespace = vim.api.nvim_create_namespace('gitlab.GhostText')
-  display.setup(M.namespace)
-  commands.setup(M.namespace)
-  highlights.setup(M.GROUP)
-  autocmd.setup(M.GROUP)
-  keymaps.setup(cfg)
-  lsp.setup(lsp_client)
+    if not cfg or not cfg.enabled then
+        return
+    end
+    M.namespace = vim.api.nvim_create_namespace('gitlab.GhostText')
+    display.setup(M.namespace)
+    commands.setup(M.namespace)
+    highlights.setup(M.GROUP)
+    autocmd.setup(M.GROUP)
+    keymaps.setup(cfg)
+    lsp.setup(lsp_client)
 end
 
 return M

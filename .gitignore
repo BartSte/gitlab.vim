@@ -6,3 +6,4 @@ node_modules/
 
 # Ignore files added in MacOS
 .DS_Store
+.aider*

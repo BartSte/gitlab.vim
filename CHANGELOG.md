@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.0
+
+- Merged changes from parent repository.
+
 ## v1.3.0
 
 - Added status tracking for code suggestions LSP (waiting, success, failed states)

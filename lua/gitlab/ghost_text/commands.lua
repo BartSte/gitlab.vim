@@ -67,12 +67,13 @@ M.insert_word          = function()
   if text == "" then
     return
   end
-  local words = utils.split_words(text)
-  if not words or #words == 0 then
+  -- Find first word including any preceding whitespace
+  local first_word_start, first_word_end = text:find("(%s*%S+)")
+  if not first_word_start then
     return
   end
-  local partial = words[1]
-  local remainder = text:sub(#partial + 1)
+  local partial = text:sub(first_word_start, first_word_end)
+  local remainder = text:sub(first_word_end + 1)
   insert.partial_insert_text(partial, remainder, "word")
 end
 

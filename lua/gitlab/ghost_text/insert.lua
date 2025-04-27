@@ -23,7 +23,9 @@ M.insert_text                = function(text)
   local lines = vim.split(text, '\n')
   vim.api.nvim_buf_set_text(0, row - 1, col, row - 1, col, lines)
   local new_row = row + #lines - 1
-  local new_col = (#lines > 1) and (#lines[#lines]) or (col + #lines[1])
+  -- Calculate column position using actual line content to preserve whitespace
+  local current_line = vim.api.nvim_buf_get_lines(0, row - 1, row, false)[1] or ""
+  local new_col = (#lines > 1) and (#lines[#lines]) or #current_line
   vim.api.nvim_win_set_cursor(0, { new_row, new_col })
   if not M.is_partial_insertion then
     display.clear_ghost_text()
